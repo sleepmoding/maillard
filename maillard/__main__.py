@@ -1,6 +1,8 @@
 import argparse
+import platform
 from io import BytesIO
 from pathlib import Path
+from pathlib import PureWindowsPath
 from PIL import Image, UnidentifiedImageError
 from tqdm import tqdm
 
@@ -22,11 +24,24 @@ if __name__ == "__main__":
         description="rips texture cache from second life viewers",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+    pathflag = False
+    if platform.system() == "Linux":
+        checkpath = Path.home()/".firestorm_x64/cache/texturecache/"
+        if checkpath.exists():
+            pathflag = True
 
-    parser.add_argument("cache_dir", type=Path, help="path to cache directory")
+    # if platform.system() == "Darwin":
+    #     # handle
+    #     True
+    # if platform.system() == "Windows":
+    #     checkpath = PureWindowsPath('C:\\Users(name)\\AppData\\Local\\Firestorm_x64\\')
+
+    if not pathflag:
+        parser.add_argument("cache_dir", type=Path, help="path to cache directory")
+
     parser.add_argument(
-        "--out-dir", "-o", type=Path, help="path to output directory", default="./out"
-    )
+       "--out-dir", "-o", type=Path, help="path to output directory", default="./out")
+
     parser.add_argument(
         "--output-extension",
         "-e",
@@ -47,8 +62,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    texture_entries = loads_bytes(args.cache_dir / "texture.entries")
-    texture_cache = loads_bytes(args.cache_dir / "texture.cache")
+    if pathflag:
+        texture_entries = loads_bytes(checkpath / "texture.entries")
+        texture_cache = loads_bytes(checkpath / "texture.cache")
+    else:
+        texture_entries = loads_bytes(args.cache_dir / "texture.entries")
+        texture_cache = loads_bytes(args.cache_dir / "texture.cache")
 
     header = decode_header(texture_entries)
     # print(header)
@@ -72,7 +91,10 @@ if __name__ == "__main__":
             continue
 
         head = read_texture_cache(texture_cache, i)
-        body = read_texture_body(uuid, cache_dir=args.cache_dir)
+        if pathflag:
+            body = read_texture_body(uuid, cache_dir=checkpath)
+        else:
+            body = read_texture_body(uuid, cache_dir=args.cache_dir)
 
         if head is None:
             bad_reads += 1
