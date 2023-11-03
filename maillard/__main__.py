@@ -24,20 +24,20 @@ if __name__ == "__main__":
         description="rips texture cache from second life viewers",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
+
+    paths = [Path.home()/".firestorm_x64/cache/texturecache/", Path('%LocaleAppData%\\Firestorm_x64\\')]
+    validpaths = []
+
     pathflag = False
-    if platform.system() == "Linux":
-        checkpath = Path.home()/".firestorm_x64/cache/texturecache/"
-        if checkpath.exists():
+    for cpath in paths:
+        if cpath.exists():
             pathflag = True
+            validpaths.append(cpath)
 
-    # if platform.system() == "Darwin":
-    #     # handle
-    #     True
-    # if platform.system() == "Windows":
-    #     checkpath = PureWindowsPath('C:\\Users(name)\\AppData\\Local\\Firestorm_x64\\')
 
-    if not pathflag:
-        parser.add_argument("cache_dir", type=Path, help="path to cache directory")
+    parser.add_argument(
+        "--cache_dir", "--c", type=Path, help="path to cache directory"
+    )
 
     parser.add_argument(
        "--out-dir", "-o", type=Path, help="path to output directory", default="./out")
@@ -61,13 +61,33 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+    if not(args.cache_dir is None):
+        if args.cache_dir.exists():
+            validpaths.append(args.cache_dir)
+        
+    # for checkpath in paths:
+    #     print(checkpath)
+    #     if checkpath.exists():
+    #         validpaths.append(checkpath)
+    #         pathflag = True
 
-    if pathflag:
-        texture_entries = loads_bytes(checkpath / "texture.entries")
-        texture_cache = loads_bytes(checkpath / "texture.cache")
-    else:
-        texture_entries = loads_bytes(args.cache_dir / "texture.entries")
-        texture_cache = loads_bytes(args.cache_dir / "texture.cache")
+    if not pathflag:
+        # Error: No Valid cache directory
+        pass
+    elif pathflag and len(validpaths) > 1:
+        # Prompt user for choice:
+        print("Multiple valid cache paths detected - please select")
+        i = 0
+        for vpath in validpaths:
+            print(f"[{i+1}] : {validpaths[i]}\n")
+            i = i + 1
+        userselect = int(input("selection: "))
+        usepath = validpaths[userselect-1]
+    elif pathflag:
+        usepath = validpaths[0]    
+
+    texture_entries = loads_bytes(usepath / "texture.entries")
+    texture_cache = loads_bytes(usepath / "texture.cache")
 
     header = decode_header(texture_entries)
     # print(header)
@@ -91,10 +111,8 @@ if __name__ == "__main__":
             continue
 
         head = read_texture_cache(texture_cache, i)
-        if pathflag:
-            body = read_texture_body(uuid, cache_dir=checkpath)
-        else:
-            body = read_texture_body(uuid, cache_dir=args.cache_dir)
+        
+        body = read_texture_body(uuid, cache_dir=usepath)
 
         if head is None:
             bad_reads += 1
