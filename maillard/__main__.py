@@ -25,7 +25,7 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    paths = [Path.home()/".firestorm_x64/cache/texturecache/", Path('%LocaleAppData%\\Firestorm_x64\\')]
+    paths = [Path.home()/".firestorm_x64/cache/texturecache/", Path('%LocaleAppData%\\Firestorm_x64\\'), Path.home()/"/Library/Caches/Firestorm_x64/texturecache"]
     validpaths = []
 
     pathflag = False
