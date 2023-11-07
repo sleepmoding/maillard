@@ -2,7 +2,6 @@ import argparse
 import platform
 from io import BytesIO
 from pathlib import Path
-from pathlib import PureWindowsPath
 from PIL import Image, UnidentifiedImageError
 from tqdm import tqdm
 
@@ -13,7 +12,6 @@ from cache import (
     read_texture_cache,
     read_texture_body,
 )
-
 
 if __name__ == "__main__":
     exts = Image.registered_extensions()
@@ -30,7 +28,9 @@ if __name__ == "__main__":
 
     pathflag = False
     for cpath in paths:
-        if cpath.exists():
+        cpath_te = cpath / "texture.entries"
+        cpath_tc = cpath / "texture.cache"
+        if cpath.exists() and cpath_tc.exists() and cpath_te.exists():
             pathflag = True
             validpaths.append(cpath)
 
@@ -62,8 +62,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if not(args.cache_dir is None):
-        if args.cache_dir.exists():
+        argpath_te = args.cache_dir / "texture.entries"
+        argpath_tc = args.cache_dir / "texutre.cache"
+        if args.cache_dir.exists() and argpath_tc.exists() and argpath_te.exists():
             validpaths.append(args.cache_dir)
+        else: 
+            print("User provided path is invalid - scanning for default path")
         
     # for checkpath in paths:
     #     print(checkpath)
@@ -72,7 +76,7 @@ if __name__ == "__main__":
     #         pathflag = True
 
     if not pathflag:
-        # Error: No Valid cache directory
+        # Error: No valid cache directory 
         pass
     elif pathflag and len(validpaths) > 1:
         # Prompt user for choice:
